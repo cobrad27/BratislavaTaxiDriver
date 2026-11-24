@@ -1,0 +1,363 @@
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1F2937"
+            android:padding="12dp"
+            android:text="stav"
+            android:textColor="#E5E7EB" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAccessibility"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Otvoriť nastavenia prístupnosti" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="BEH"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Zapnuté" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swDryRun"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Nasucho – iba loguj, neklikaj" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Zobraziť prekrytie so stavom" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="DOJAZD K ZÁKAZNÍKOVI"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/lbl_sPickupMin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Minimum dojazdu"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sPickupMin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="0.5"
+            android:value="0.0"
+            android:valueFrom="0.0"
+            android:valueTo="30.0" />
+
+        <TextView
+            android:id="@+id/lbl_sPickupMax"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Maximum dojazdu"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sPickupMax"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="0.5"
+            android:value="5.0"
+            android:valueFrom="0.0"
+            android:valueTo="30.0" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="DĹŽKA JAZDY"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/lbl_sTripMin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Minimum dĺžky jazdy"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sTripMin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="0.5"
+            android:value="0.0"
+            android:valueFrom="0.0"
+            android:valueTo="100.0" />
+
+        <TextView
+            android:id="@+id/lbl_sTripMax"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Maximum dĺžky jazdy"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sTripMax"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="0.5"
+            android:value="0.0"
+            android:valueFrom="0.0"
+            android:valueTo="100.0" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="CENA A PLATBA"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/lbl_sFare"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Minimálna cena"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sFare"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="0.5"
+            android:value="0.0"
+            android:valueFrom="0.0"
+            android:valueTo="50.0" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swCash"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Odmietnuť jazdy iba na hotovosť" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="BEZPEČNOSŤ"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swUnknown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Odmietnuť aj keď sa údaj nepodarí prečítať" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swRequireAccept"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Klikať len ak je na karte tlačidlo Prijať" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Záložne skúsiť systémové Späť" />
+
+        <TextView
+            android:id="@+id/lbl_sConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Zhodné čítania pred klikom: 2"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sConfirm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="1.0"
+            android:value="2.0"
+            android:valueFrom="1.0"
+            android:valueTo="4.0" />
+
+        <TextView
+            android:id="@+id/lbl_sTapMs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Dĺžka dotyku: 120 ms"
+            android:textStyle="bold" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sTapMs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="20.0"
+            android:value="120.0"
+            android:valueFrom="40.0"
+            android:valueTo="300.0" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="ROZPOZNÁVANIE"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Balíky aplikácií (oddelené čiarkou)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPackages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Texty tlačidla Prijať">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAccept"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Kľúčové slová pre X">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etClose"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="TEST FILTRA BEZ UBERU"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Riadky textu z ponuky, každý na nový riadok">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:minLines="4" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Vyhodnotiť" />
+
+        <TextView
+            android:id="@+id/testResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="LOG"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCopyLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Kopírovať log" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Vymazať log" />
+
+        <TextView
+            android:id="@+id/log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp"
+            android:fontFamily="monospace"
+            android:textSize="11sp" />
+    </LinearLayout>
+</ScrollView>
