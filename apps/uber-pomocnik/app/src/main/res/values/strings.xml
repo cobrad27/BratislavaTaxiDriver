@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Uber pomocník</string>
+    <string name="service_label">Uber pomocník – filter ponúk</string>
+    <string name="service_description">Číta text ponuky jazdy v aplikácii vodiča a pri nevyhovujúcej vzdialenosti stlačí X. Žiadne dáta neopúšťajú zariadenie.</string>
+</resources>
