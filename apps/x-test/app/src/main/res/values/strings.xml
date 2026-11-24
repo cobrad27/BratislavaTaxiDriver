@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">X test</string>
+    <string name="service_label">X test – klikač na X</string>
+    <string name="service_description">Nájde zatváracie tlačidlo X vo vyskakovacej ponuke, klikne ho a vypíše celý strom prístupnosti do logu. Slúži na ladenie.</string>
+</resources>
