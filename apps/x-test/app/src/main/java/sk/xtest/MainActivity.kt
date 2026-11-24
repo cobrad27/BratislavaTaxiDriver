@@ -66,8 +66,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         loading = true
         val p = sp()
-        b.swEnabled.isChecked = p.getBoolean("enabled", false)
-        b.swClick.isChecked = p.getBoolean("click", false)
+        b.swEnabled.isChecked = p.getBoolean("enabled", true)
+        b.swClick.isChecked = p.getBoolean("click", true)
         b.swAllApps.isChecked = p.getBoolean("allApps", false)
         b.swShape.isChecked = p.getBoolean("shape", true)
         b.swDump.isChecked = p.getBoolean("dump", true)
@@ -92,14 +92,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshStatus() {
         b.status.text = buildString {
+            append("X test 1.1\n")
             append(if (granted()) "✓ Prístupnosť povolená" else "✗ Prístupnosť NEPOVOLENÁ")
             append("\n")
             append(if (XService.running) "✓ Služba beží" else "✗ Služba nebeží")
             append("\n")
             val p = sp()
-            append(if (p.getBoolean("enabled", false)) "✓ Zapnuté" else "✗ Vypnuté")
+            append(if (p.getBoolean("enabled", true)) "✓ Zapnuté" else "✗ Vypnuté")
             append("  ·  ")
-            append(if (p.getBoolean("click", false)) "klikanie ZAP" else "klikanie VYP")
+            append(if (p.getBoolean("click", true)) "klikanie ZAP" else "klikanie VYP")
             append("\n")
             append(
                 if (p.getBoolean("allApps", false)) "sleduje všetky aplikácie"
