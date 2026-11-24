@@ -1,0 +1,92 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1F2937"
+            android:padding="12dp"
+            android:text="stav"
+            android:textColor="#E5E7EB" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAccessibility"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Otvoriť nastavenia prístupnosti" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Zapnuté" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swClick"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Automaticky klikať na X" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swAllApps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Sledovať všetky aplikácie" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swShape"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Hľadať X aj podľa tvaru (bez textu)" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swDump"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Vypisovať celý strom do logu" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCopy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Kopírovať log" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Vymazať log" />
+
+        <TextView
+            android:id="@+id/log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="32dp"
+            android:fontFamily="monospace"
+            android:textSize="10sp" />
+    </LinearLayout>
+</ScrollView>
