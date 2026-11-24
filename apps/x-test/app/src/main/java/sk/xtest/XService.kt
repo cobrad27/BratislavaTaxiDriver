@@ -3,14 +3,23 @@ package sk.xtest
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.Path
 import android.graphics.Rect
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
+import androidx.annotation.RequiresApi
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -30,17 +39,22 @@ class XService : AccessibilityService() {
         private const val UBER = "com.ubercab.driver"
         private const val DEBOUNCE_MS = 150L
         private const val COOLDOWN_MS = 2000L
+        private const val OCR_INTERVAL_MS = 1000L
         private const val MAX_NODES = 2000
         private const val MAX_DEPTH = 80
         private const val MAX_DUMP_LINES = 150
+        private const val DARK = 90
 
         /** Tlacidlo prijatia - musi sediet presne na cely text. */
         private val ACCEPT = setOf("zhoda", "prijat", "accept", "match", "prijmout")
 
-        /** Dalsie znaky karty ponuky. */
+        /** Dalsie znaky karty ponuky v strome. */
         private val INFO = listOf(
             "uberx", "uber x", "comfort", "vzdialenost", "platba v", "platba kartou", "hotovost"
         )
+
+        /** Stitok typu jazdy - v jeho riadku je vpravo X. */
+        private val BADGE = listOf("uberx", "uber x", "comfort", "uber green", "uber black", "uberxl")
 
         private val CLOSE_WORDS = listOf(
             "close", "dismiss", "decline", "reject", "zavriet", "odmietnut", "zavri", "ic_close", "btn_close"
@@ -51,8 +65,13 @@ class XService : AccessibilityService() {
     private var scheduled = false
     private var busy = false
     private var lastActionAt = 0L
+    private var lastOcrAt = 0L
     private var lastSig = ""
     private var lastEvent = ""
+    private var lastOcrNote = ""
+    private val ocrTaps = ArrayDeque<Long>()
+
+    private val recognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     private fun prefs() = getSharedPreferences("xtest", Context.MODE_PRIVATE)
     private fun on(key: String, def: Boolean) = prefs().getBoolean(key, def)
@@ -61,7 +80,8 @@ class XService : AccessibilityService() {
         super.onServiceConnected()
         running = true
         instance = this
-        XLog.add("Služba pripojená (v1.1). Klikám len keď vidím ponuku.")
+        XLog.add("Služba pripojená (v1.1). X hľadám v strome aj na snímke obrazovky.")
+        if (Build.VERSION.SDK_INT < 30) XLog.add("Android pod 11 – snímka obrazovky nie je k dispozícii.")
     }
 
     override fun onDestroy() {
@@ -78,7 +98,7 @@ class XService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (!on("enabled", false)) return
+        if (!on("enabled", true)) return
         val pkg = event.packageName?.toString()
         if (!watched(pkg)) return
         logEvent(event, pkg ?: "")
@@ -86,7 +106,6 @@ class XService : AccessibilityService() {
         scheduleScan()
     }
 
-    /** Udalosti okien loguje vzdy - ak Uber kartu neukaze v strome, aspon tu bude jej text. */
     private fun logEvent(e: AccessibilityEvent, pkg: String) {
         val t = e.eventType
         if (t != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
@@ -194,13 +213,9 @@ class XService : AccessibilityService() {
         return sb.toString().trim()
     }
 
-    // ------------------------------------------------------------ ponuka
+    // ------------------------------------------------------------ ponuka v strome
 
-    private class Offer(
-        val accept: AccessibilityNodeInfo?,
-        val card: Rect,
-        val words: Set<String>
-    )
+    private class Offer(val accept: AccessibilityNodeInfo?, val card: Rect, val words: Set<String>)
 
     private fun findOffer(nodes: List<AccessibilityNodeInfo>): Offer? {
         var accept: AccessibilityNodeInfo? = null
@@ -223,7 +238,6 @@ class XService : AccessibilityService() {
                 words.add(hit)
             }
         }
-        // Bez tlacidla prijatia treba aspon dva rozne znaky karty.
         if (accept == null && words.size < 2) return null
 
         val card = Rect()
@@ -238,7 +252,6 @@ class XService : AccessibilityService() {
             } else card.union(r)
         }
 
-        // Rozsir na rodica, ktory obsahuje vsetky kotvy - to je karta.
         val minH = if (anchors.size == 1) card.height() * 3 else card.height()
         val screenH = resources.displayMetrics.heightPixels
         var p: AccessibilityNodeInfo? = try {
@@ -263,8 +276,6 @@ class XService : AccessibilityService() {
         }
         return Offer(accept, card, words)
     }
-
-    // ------------------------------------------------------------ X v karte
 
     private class Cand(val node: AccessibilityNodeInfo, val score: Int, val why: String)
 
@@ -308,7 +319,6 @@ class XService : AccessibilityService() {
                 score += 40; why.append("tvar-v-rohu-karty ")
             }
             if (score == 0) continue
-            // Mimo karty len ak ma jasny nazov.
             if (!inCard && score < 60) continue
             if (inCard) {
                 score += 15; why.append("v-karte ")
@@ -323,7 +333,6 @@ class XService : AccessibilityService() {
         return out.sortedByDescending { it.score }
     }
 
-    /** Klikatelny prvok alebo jeho maly klikatelny rodic - nikdy nie cela karta. */
     private fun clickTarget(n: AccessibilityNodeInfo): AccessibilityNodeInfo? {
         var p: AccessibilityNodeInfo? = n
         var hop = 0
@@ -370,28 +379,32 @@ class XService : AccessibilityService() {
         val cands = if (offer != null) findX(snap.nodes, offer) else emptyList()
         val sig = (offer?.words?.sorted()?.joinToString(",") ?: "-") + "|" + snap.nodes.size + "|" +
             (cands.firstOrNull()?.let { describe(it.node) } ?: "")
-        if (sig == lastSig) return
-        lastSig = sig
-
-        if (on("dump", true)) XLog.putDump(buildDump(snap, offer), offer != null)
-
-        if (offer == null) {
-            XLog.add("bez ponuky · uzlov ${snap.nodes.size}")
-            return
+        val changed = sig != lastSig
+        if (changed) {
+            lastSig = sig
+            if (on("dump", true)) XLog.putDump(buildDump(snap, offer), offer != null)
         }
 
+        if (offer == null || cands.isEmpty()) {
+            if (changed) {
+                XLog.add(
+                    if (offer == null) "v strome ponuka nie je · uzlov ${snap.nodes.size} · skúšam snímku"
+                    else "PONUKA v strome (${offer.words.joinToString()}), ale X nie · skúšam snímku"
+                )
+            }
+            ocrFallback()
+            return
+        }
+        if (!changed) return
+
         XLog.add(
-            "PONUKA: ${offer.words.joinToString()} · karta ${offer.card.toShortString()} · " +
+            "PONUKA v strome: ${offer.words.joinToString()} · karta ${offer.card.toShortString()} · " +
                 "kandidátov na X: ${cands.size}"
         )
         cands.take(3).forEachIndexed { i, c ->
             XLog.add("  X kandidát ${i + 1}: skóre=${c.score} (${c.why}) ${describe(c.node)}")
         }
-        if (cands.isEmpty()) {
-            XLog.add("X v karte nenájdené")
-            return
-        }
-        if (!on("click", false)) {
+        if (!on("click", true)) {
             XLog.add("klikanie vypnuté – neklikám")
             return
         }
@@ -420,9 +433,22 @@ class XService : AccessibilityService() {
                 XLog.add("1) klik na prvok: ${if (ok) "odoslaný" else "nedá sa"}")
                 if (ok) verify(node, 1, 500L) else click(node, 2)
             }
-            2 -> gesture(node) { ok ->
-                XLog.add("2) gesto: ${if (ok) "dokončené" else "zlyhalo"}")
-                if (ok) verify(node, 2, 600L) else done(false, "gesto zlyhalo")
+            2 -> {
+                val r = Rect()
+                try {
+                    node.refresh()
+                } catch (_: Throwable) {
+                }
+                node.getBoundsInScreen(r)
+                if (r.isEmpty) {
+                    done(false, "prvok nemá rozmery")
+                    return
+                }
+                XLog.add("gesto na ${r.centerX()},${r.centerY()}")
+                tapAt(r.exactCenterX(), r.exactCenterY()) { ok ->
+                    XLog.add("2) gesto: ${if (ok) "dokončené" else "zlyhalo"}")
+                    if (ok) verify(node, 2, 600L) else done(false, "gesto zlyhalo")
+                }
             }
             else -> done(false, "ponuka sa nezavrela")
         }
@@ -445,20 +471,7 @@ class XService : AccessibilityService() {
         XLog.add(if (success) "HOTOVO – $msg" else "NEPODARILO SA – $msg")
     }
 
-    private fun gesture(node: AccessibilityNodeInfo, cb: (Boolean) -> Unit) {
-        val r = Rect()
-        try {
-            node.refresh()
-        } catch (_: Throwable) {
-        }
-        node.getBoundsInScreen(r)
-        if (r.width() <= 0 || r.height() <= 0) {
-            cb(false)
-            return
-        }
-        val x = r.exactCenterX()
-        val y = r.exactCenterY()
-        XLog.add("gesto na ${x.toInt()},${y.toInt()}")
+    private fun tapAt(x: Float, y: Float, cb: (Boolean) -> Unit) {
         val path = Path().apply { moveTo(x, y) }
         val gd = GestureDescription.Builder()
             .addStroke(GestureDescription.StrokeDescription(path, 0, 120))
@@ -473,5 +486,166 @@ class XService : AccessibilityService() {
             false
         }
         if (!sent) cb(false)
+    }
+
+    // ------------------------------------------------------------ snimka obrazovky + OCR
+
+    private fun ocrNote(s: String) {
+        if (s == lastOcrNote) return
+        lastOcrNote = s
+        XLog.add(s)
+    }
+
+    private fun ocrFallback() {
+        if (busy) return
+        if (Build.VERSION.SDK_INT < 30) return
+        val now = SystemClock.uptimeMillis()
+        if (now - lastOcrAt < OCR_INTERVAL_MS) return
+        lastOcrAt = now
+        busy = true
+        shoot()
+    }
+
+    @RequiresApi(30)
+    private fun shoot() {
+        try {
+            takeScreenshot(Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
+                override fun onSuccess(res: ScreenshotResult) {
+                    val bmp = try {
+                        Bitmap.wrapHardwareBuffer(res.hardwareBuffer, res.colorSpace)
+                            ?.copy(Bitmap.Config.ARGB_8888, false)
+                    } catch (_: Throwable) {
+                        null
+                    } finally {
+                        res.hardwareBuffer.close()
+                    }
+                    if (bmp == null) {
+                        ocrNote("snímku sa nepodarilo prečítať")
+                        busy = false
+                        return
+                    }
+                    recognize(bmp)
+                }
+
+                override fun onFailure(errorCode: Int) {
+                    ocrNote("snímka obrazovky zlyhala: kód $errorCode")
+                    busy = false
+                }
+            })
+        } catch (t: Throwable) {
+            ocrNote("takeScreenshot: ${t.message}")
+            busy = false
+        }
+    }
+
+    private fun recognize(bmp: Bitmap) {
+        recognizer.process(InputImage.fromBitmap(bmp, 0))
+            .addOnSuccessListener { text ->
+                try {
+                    analyze(text, bmp)
+                } catch (t: Throwable) {
+                    ocrNote("analýza snímky: ${t.message}")
+                    busy = false
+                }
+            }
+            .addOnFailureListener { e ->
+                ocrNote("čítanie textu zlyhalo: ${e.message}")
+                busy = false
+            }
+    }
+
+    private fun analyze(text: Text, bmp: Bitmap) {
+        var accept: Rect? = null
+        var badge: Rect? = null
+        val seen = ArrayList<String>()
+        for (block in text.textBlocks) {
+            for (line in block.lines) {
+                val b = line.boundingBox ?: continue
+                val t = norm(line.text)
+                if (seen.size < 12) seen.add(line.text)
+                if (accept == null && t in ACCEPT) accept = b
+                if (badge == null && BADGE.any { t.contains(it) }) badge = b
+            }
+        }
+        val a = accept
+        val bd = badge
+        if (a == null || bd == null || a.top <= bd.bottom) {
+            ocrNote("snímka: ponuka nie je · " + seen.joinToString(" | ").take(220))
+            busy = false
+            return
+        }
+
+        val x = locateX(bmp, bd, a)
+        if (x == null) {
+            XLog.add("snímka: PONUKA (štítok ${bd.toShortString()}), ale krížik X v obraze nenájdený")
+            busy = false
+            return
+        }
+        XLog.add(
+            "snímka: PONUKA · štítok ${bd.toShortString()} · prijať ${a.toShortString()} · " +
+                "X na ${x.first},${x.second}"
+        )
+        if (!on("click", true)) {
+            XLog.add("klikanie vypnuté – neklikám")
+            busy = false
+            return
+        }
+
+        val now = SystemClock.uptimeMillis()
+        while (ocrTaps.isNotEmpty() && now - ocrTaps.first() > 10_000) ocrTaps.removeFirst()
+        if (ocrTaps.size >= 3) {
+            XLog.add("3 ťuknutia za 10 s a ponuka stále svieti – chvíľu čakám")
+            busy = false
+            return
+        }
+        ocrTaps.addLast(now)
+
+        tapAt(x.first.toFloat(), x.second.toFloat()) { ok ->
+            XLog.add("ťuk na X zo snímky: ${if (ok) "dokončený" else "zlyhal"}")
+            // Daj ponuke cas zmiznut, potom sa overi dalsou snimkou.
+            lastOcrAt = SystemClock.uptimeMillis() + 300
+            lastOcrNote = ""
+            busy = false
+        }
+    }
+
+    private fun lum(p: Int) = (Color.red(p) * 299 + Color.green(p) * 587 + Color.blue(p) * 114) / 1000
+
+    /**
+     * X je v riadku stitku (UberX) vpravo. Od konca stitku ide doprava po bielej karte
+     * az po prvy tmavy bod - to je ciara krizika. Stred sa dopocita z oboch ciar.
+     */
+    private fun locateX(bmp: Bitmap, badge: Rect, accept: Rect): Pair<Int, Int>? {
+        val h = badge.height().coerceAtLeast(10)
+        val y0 = badge.centerY().coerceIn(0, bmp.height - 1)
+        val start = (badge.right + h * 2).coerceIn(0, bmp.width - 1)
+        val limit = (2 * accept.centerX() - badge.left + h * 3).coerceIn(start, bmp.width - 1)
+
+        var xs = -1
+        for (x in start..limit) {
+            if (lum(bmp.getPixel(x, y0)) < DARK) {
+                xs = x
+                break
+            }
+        }
+        if (xs < 0) return null
+
+        var maxX = xs
+        val xEnd = (xs + 2 * h).coerceAtMost(bmp.width - 1)
+        for (x in xs..xEnd) if (lum(bmp.getPixel(x, y0)) < DARK) maxX = x
+        val xc = (xs + maxX) / 2
+
+        var minY = -1
+        var maxY = -1
+        val yFrom = (badge.top - h).coerceAtLeast(0)
+        val yTo = (badge.bottom + 2 * h).coerceAtMost(bmp.height - 1)
+        for (y in yFrom..yTo) {
+            if (lum(bmp.getPixel(xc, y)) < DARK) {
+                if (minY < 0) minY = y
+                maxY = y
+            }
+        }
+        val yc = if (minY >= 0) (minY + maxY) / 2 else y0
+        return Pair(xc, yc)
     }
 }
