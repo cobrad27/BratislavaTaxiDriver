@@ -1,0 +1,60 @@
+name: APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  najdi:
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.zoznam.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: zoznam
+        run: |
+          apps=$(ls -1 apps | jq -R . | jq -sc .)
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          echo "Najdene appky: $apps"
+
+  build:
+    needs: najdi
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.najdi.outputs.apps) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: SDK balicky
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+      - name: Testy
+        working-directory: apps/${{ matrix.app }}
+        run: gradle test --no-daemon --stacktrace
+      - name: Zostavenie APK
+        working-directory: apps/${{ matrix.app }}
+        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Zbalenie
+        run: |
+          mkdir -p out
+          cp apps/${{ matrix.app }}/app/build/outputs/apk/debug/app-debug.apk out/${{ matrix.app }}.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-apk
+          path: out/${{ matrix.app }}.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ matrix.app }}-${{ github.run_number }}
+          name: ${{ matrix.app }} build ${{ github.run_number }}
+          files: out/${{ matrix.app }}.apk
