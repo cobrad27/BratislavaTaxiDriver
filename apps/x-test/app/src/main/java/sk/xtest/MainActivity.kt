@@ -17,6 +17,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun sp() = getSharedPreferences("xtest", Context.MODE_PRIVATE)
 
+    private fun version(): String = try {
+        packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
+    } catch (_: Throwable) {
+        "?"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityMainBinding.inflate(layoutInflater)
@@ -92,7 +98,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun refreshStatus() {
         b.status.text = buildString {
-            append("X test 1.1\n")
+            append("X test ").append(version()).append("\n")
             append(if (granted()) "✓ Prístupnosť povolená" else "✗ Prístupnosť NEPOVOLENÁ")
             append("\n")
             append(if (XService.running) "✓ Služba beží" else "✗ Služba nebeží")
