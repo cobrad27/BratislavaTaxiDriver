@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ikona pre vsetky verzie Androidu: cierny stvorec a modra 8 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#000000" android:pathData="M18,14 L90,14 Q96,14 96,20 L96,88 Q96,94 90,94 L18,94 Q12,94 12,88 L12,20 Q12,14 18,14 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M42,24 L46,20 L62,20 L66,24 L62,28 L46,28 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M42,54 L46,50 L62,50 L66,54 L62,58 L46,58 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M42,84 L46,80 L62,80 L66,84 L62,88 L46,88 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M40,26 L44,30 L44,48 L40,52 L36,48 L36,30 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M68,26 L72,30 L72,48 L68,52 L64,48 L64,30 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M40,56 L44,60 L44,78 L40,82 L36,78 L36,60 Z"/>
+    <path android:fillColor="#28C8FF" android:pathData="M68,56 L72,60 L72,78 L68,82 L64,78 L64,60 Z"/>
+</vector>
